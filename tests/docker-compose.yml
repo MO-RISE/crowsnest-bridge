@@ -1,0 +1,37 @@
+version: '3'
+services:
+
+  crowsnest-bridge:
+    build: ../.
+    environment:
+      - MQTT_SOURCE_HOST=broker_1
+      - MQTT_SOURCE_PORT=1883
+      - MQTT_REMOTE_HOST=broker_2
+      - MQTT_REMOTE_PORT=1883
+      - MQTT_TOPICS=/any/topic/#
+    depends_on:
+      - broker_1
+      - broker_2
+    restart: unless-stopped
+
+  broker_1:
+    image: emqx/emqx
+    environment:
+      - EMQX_LOG__LEVEL=debug
+      - EMQX_ACL_NOMATCH=allow
+      - EMQX_ACL_FILE=etc/not-available.conf
+    ports:
+      - 1881:1883
+      - 8081:8083
+      - 18081:18083
+  
+  broker_2:
+    image: emqx/emqx
+    environment:
+      - EMQX_LOG__LEVEL=debug
+      - EMQX_ACL_NOMATCH=allow
+      - EMQX_ACL_FILE=etc/not-available.conf
+    ports:
+      - 1882:1883
+      - 8082:8083
+      - 18082:18083

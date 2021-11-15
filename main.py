@@ -59,7 +59,7 @@ SUBSCRIBE_OPTIONS = SubscribeOptions(
 
 def publish_to_source(client, userdata, message):  # pylint: disable=unused-argument
     """Publish to source broker"""
-    source.publish(message.topic, message.qos, message.retain)
+    source.publish(message.topic, message.payload, message.qos, message.retain)
 
 
 remote.on_message = publish_to_source
@@ -67,7 +67,7 @@ remote.on_message = publish_to_source
 
 def publish_to_remote(client, userdata, message):  # pylint: disable=unused-argument
     """Publish to remote broker"""
-    remote.publish(message.topic, message.qos, message.retain)
+    remote.publish(message.topic, message.payload, message.qos, message.retain)
 
 
 source.on_message = publish_to_remote
@@ -84,9 +84,8 @@ def on_connect(
 source.on_connect = on_connect
 remote.on_connect = on_connect
 
-
 # Do connection
-remote.connect(MQTT_SOURCE_HOST, MQTT_SOURCE_PORT)
+remote.connect(MQTT_REMOTE_HOST, MQTT_REMOTE_PORT)
 source.connect(MQTT_SOURCE_HOST, MQTT_SOURCE_PORT)
 
 # Start loops
