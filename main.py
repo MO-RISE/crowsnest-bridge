@@ -71,9 +71,16 @@ SUBSCRIBE_OPTIONS = SubscribeOptions(
 # on-message callbacks
 def publish_to_source(client, userdata, message):  # pylint: disable=unused-argument
     """Publish to source broker"""
-    source.publish(
-        message.topic, message.payload, message.qos, message.retain, message.properties
-    )
+    try:
+        source.publish(
+            message.topic,
+            message.payload,
+            message.qos,
+            message.retain,
+            message.properties,
+        )
+    except Exception:  # pylint: disable=broad-except
+        LOGGER.exception("Failed to publish to source!")
 
 
 remote.on_message = publish_to_source
@@ -81,9 +88,16 @@ remote.on_message = publish_to_source
 
 def publish_to_remote(client, userdata, message):  # pylint: disable=unused-argument
     """Publish to remote broker"""
-    remote.publish(
-        message.topic, message.payload, message.qos, message.retain, message.properties
-    )
+    try:
+        remote.publish(
+            message.topic,
+            message.payload,
+            message.qos,
+            message.retain,
+            message.properties,
+        )
+    except Exception:  # pylint: disable=broad-except
+        LOGGER.exception("Failed to publish to remote!")
 
 
 source.on_message = publish_to_remote
