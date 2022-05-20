@@ -1,4 +1,5 @@
 """Main entrypoint for this application"""
+import sys
 import logging
 import warnings
 from threading import Thread
@@ -38,7 +39,9 @@ MQTT_TOPICS = env.list("MQTT_TOPICS", [])
 LOG_LEVEL = env.log_level("LOG_LEVEL", logging.WARNING)
 
 # Setup logger
-logging.basicConfig(level=LOG_LEVEL)
+logging.basicConfig(
+    format="%(asctime)s %(levelname)s %(name)s %(message)s", level=LOG_LEVEL
+)
 logging.captureWarnings(True)
 warnings.filterwarnings("once")
 LOGGER = logging.getLogger("crowsnest-bridge-mqtt")
@@ -151,5 +154,7 @@ remote_thread = Thread(target=remote.loop_forever)
 remote_thread.daemon = True
 remote_thread.start()
 
-while True:
+while source_thread.is_alive() and remote_thread.is_alive():
     sleep(1)
+
+sys.exit(1)
