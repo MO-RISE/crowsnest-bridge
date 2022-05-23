@@ -84,6 +84,7 @@ def publish_to_source(client, userdata, message):  # pylint: disable=unused-argu
         )
     except Exception:  # pylint: disable=broad-except
         LOGGER.exception("Failed to publish to source!")
+        source.reconnect()
 
 
 remote.on_message = publish_to_source
@@ -101,6 +102,7 @@ def publish_to_remote(client, userdata, message):  # pylint: disable=unused-argu
         )
     except Exception:  # pylint: disable=broad-except
         LOGGER.exception("Failed to publish to remote!")
+        remote.reconnect()
 
 
 source.on_message = publish_to_remote
