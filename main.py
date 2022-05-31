@@ -1,4 +1,5 @@
 """Main entrypoint for this application"""
+import os
 import sys
 import logging
 import warnings
@@ -89,7 +90,7 @@ def publish_to_source(client, userdata, message):  # pylint: disable=unused-argu
         remote.reconnect()
     except Exception:  # pylint: disable=broad-except
         LOGGER.exception("Failed to publish to remote! Fatal error!")
-        sys.exit(1)
+        os._exit(1)  # pylint: disable=protected-access
 
 
 @source.message_callback()
@@ -108,7 +109,7 @@ def publish_to_remote(client, userdata, message):  # pylint: disable=unused-argu
         remote.reconnect()
     except Exception:  # pylint: disable=broad-except
         LOGGER.exception("Failed to publish to remote! Fatal error!")
-        sys.exit(1)
+        os._exit(1)  # pylint: disable=protected-access
 
 
 @source.connect_callback()
