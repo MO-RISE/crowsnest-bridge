@@ -2,6 +2,7 @@
 import sys
 import logging
 import warnings
+from ssl import SSLError
 from threading import Thread
 
 from time import sleep
@@ -71,7 +72,8 @@ SUBSCRIBE_OPTIONS = SubscribeOptions(
     retainHandling=SubscribeOptions.RETAIN_SEND_ON_SUBSCRIBE,
 )
 
-# on-message callbacks
+
+@remote.message_callback()
 def publish_to_source(client, userdata, message):  # pylint: disable=unused-argument
     """Publish to source broker"""
     try:
@@ -82,14 +84,15 @@ def publish_to_source(client, userdata, message):  # pylint: disable=unused-argu
             message.retain,
             message.properties,
         )
+    except SSLError:
+        LOGGER.exception("Failed to publish to remote! Reconnecting...")
+        remote.reconnect()
     except Exception:  # pylint: disable=broad-except
-        LOGGER.exception("Failed to publish to source!")
-        source.reconnect()
+        LOGGER.exception("Failed to publish to remote! Fatal error!")
+        sys.exit(1)
 
 
-remote.on_message = publish_to_source
-
-
+@source.message_callback()
 def publish_to_remote(client, userdata, message):  # pylint: disable=unused-argument
     """Publish to remote broker"""
     try:
@@ -100,14 +103,16 @@ def publish_to_remote(client, userdata, message):  # pylint: disable=unused-argu
             message.retain,
             message.properties,
         )
-    except Exception:  # pylint: disable=broad-except
-        LOGGER.exception("Failed to publish to remote!")
+    except SSLError:
+        LOGGER.exception("Failed to publish to remote! Reconnecting...")
         remote.reconnect()
+    except Exception:  # pylint: disable=broad-except
+        LOGGER.exception("Failed to publish to remote! Fatal error!")
+        sys.exit(1)
 
 
-source.on_message = publish_to_remote
-
-## on-connect callback
+@source.connect_callback()
+@remote.connect_callback()
 def on_connect(
     client, userdata, flags, reason_code, properties=None
 ):  # pylint: disable=unused-argument
@@ -122,20 +127,14 @@ def on_connect(
         client.subscribe(topic, options=SUBSCRIBE_OPTIONS, properties=None)
 
 
-source.on_connect = on_connect
-remote.on_connect = on_connect
-
-## on-disconnect callback
+@source.disconnect_callback()
+@remote.disconnect_callback()
 def on_disconnect(
     client, userdata, flags, reason_code, properties=None
 ):  # pylint: disable=unused-argument
     """Subscribe on connect"""
     if reason_code != 0:
         LOGGER.error("Disconnected from %s with reason code: %s", client, reason_code)
-
-
-source.on_disconnect = on_disconnect
-remote.on_disconnect = on_disconnect
 
 
 # Logging
